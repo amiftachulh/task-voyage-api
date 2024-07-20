@@ -112,13 +112,17 @@ const boards = new Hono()
    * Update a board by id.
    */
   .put("/:id", validate("json", boardSchema), async (c) => {
-    const authId = new ObjectId(c.get("auth").id)
     const { title, description } = c.req.valid("json")
     const now = new Date().toISOString()
     const board = await Board.updateOne(
       {
         _id: new ObjectId(c.req.param("id")),
-        $or: [{ owner: authId }, { moderators: authId }],
+        members: {
+          $elemMatch: {
+            _id: new ObjectId(c.get("auth").id),
+            role: { $in: ["owner", "moderator"] },
+          },
+        },
       },
       {
         $set: {
@@ -136,10 +140,14 @@ const boards = new Hono()
    * Delete a board by id.
    */
   .delete("/:id", async (c) => {
-    const authId = new ObjectId(c.get("auth").id)
     const board = await Board.deleteOne({
       _id: new ObjectId(c.req.param("id")),
-      owner: authId,
+      members: {
+        $elemMatch: {
+          _id: new ObjectId(c.get("auth").id),
+          role: "owner",
+        },
+      },
     })
     if (board.deletedCount === 0) return c.json(res("Board not found."), 404)
     return c.json(res("Board deleted."))
