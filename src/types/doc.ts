@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb"
 
 export type UserCollection = {
   email: string
-  username: string
+  username: string | null
   displayName: string | null
   password: string
   role: "admin" | "user"

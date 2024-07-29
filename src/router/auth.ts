@@ -18,7 +18,7 @@ const auth = new Hono()
   .post("/register", validate("json", registerSchema), async (c) => {
     const body = c.req.valid("json")
     const exist = await User.findOne(
-      { $or: [{ email: body.email }, { username: body.username }] },
+      { email: body.email },
       { collation: { locale: "en", strength: 2 } }
     )
 
@@ -32,8 +32,8 @@ const auth = new Hono()
     const now = new Date().toISOString()
     await User.insertOne({
       email: body.email,
-      username: body.username,
-      displayName: body.displayName,
+      username: null,
+      displayName: null,
       password: hashedPassword,
       role: "user",
       createdAt: now,
@@ -61,7 +61,6 @@ const auth = new Hono()
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
     const payload: JwtPayloadSchema = {
       id: user._id.toString(),
-      sub: user.username,
       exp,
       jti: uuidv7(),
       role: user.role,
